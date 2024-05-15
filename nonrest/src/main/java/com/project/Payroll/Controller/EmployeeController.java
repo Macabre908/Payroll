@@ -1,6 +1,7 @@
 package com.project.Payroll.Controller;
 
 import com.project.Payroll.Entities.Employee;
+import com.project.Payroll.Exceptions.EmployeeNotFoundException;
 import com.project.Payroll.Repositories.EmployeeRepository;
 import org.springframework.web.bind.annotation.*;
 
