@@ -3,21 +3,29 @@ package com.project.Payroll.Controller;
 import com.project.Payroll.Entities.Employee;
 import com.project.Payroll.Exceptions.EmployeeNotFoundException;
 import com.project.Payroll.Repositories.EmployeeRepository;
+import com.project.Payroll.evolution.EmployeeModelAssembler;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@RestController
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 public class EmployeeController {
 
     private final EmployeeRepository repository;
+    private final EmployeeModelAssembler employeeModelAssembler;
 
-    public EmployeeController(EmployeeRepository repository) {
+    public EmployeeController(EmployeeRepository repository, EmployeeModelAssembler employeeModelAssembler) {
         this.repository = repository;
+        this.employeeModelAssembler = employeeModelAssembler;
     }
 
     @GetMapping("/employees")
-    List<Employee> getAllEmployees() {
+    public List<Employee> getAllEmployees() {
         return this.repository.findAll();
     }
 
@@ -27,7 +35,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/employees/{id}")
-    Employee getEmployee(@PathVariable Long id) {
+    public Employee getEmployee(@PathVariable Long id) {
         return this.repository.findById(id).orElseThrow(() -> new EmployeeNotFoundException(id));
     }
 
