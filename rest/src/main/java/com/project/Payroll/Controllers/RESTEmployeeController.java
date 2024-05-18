@@ -7,9 +7,9 @@ import com.project.Payroll.Repositories.EmployeeRepository;
 import com.project.Payroll.evolution.EmployeeModelAssembler;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,12 +36,49 @@ public class RESTEmployeeController {
         return assembler.toModel(employee);
     }
 
+    @PostMapping("/employees")
+    ResponseEntity<?> newEmployee(@RequestBody Employee employee) {
+        EntityModel<Employee> entityModel = assembler.toModel(employeeRepository.save(employee));
+
+        return ResponseEntity
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
+    }
+
+    @PutMapping("/employees/{id}")
+    ResponseEntity<?> replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
+        Employee updatedEmployee = this.employeeRepository.findById(id)
+                .map(employee -> {
+                    employee.setName(newEmployee.getName());
+                    employee.setRole(newEmployee.getRole());
+                    return this.employeeRepository.save(employee);
+                })
+                .orElseGet(() -> {
+                    newEmployee.setId(id);
+                    return this.employeeRepository.save(newEmployee);
+                });
+
+        EntityModel<Employee> entityModel = assembler.toModel(updatedEmployee);
+
+        return ResponseEntity
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
+
+    }
+
     @GetMapping("/employees")
     public CollectionModel<EntityModel<Employee>> getAllEmployees() {
         List<EntityModel<Employee>> employees = this.employeeRepository.findAll().stream()
                 .map(employee -> assembler.toModel(employee)).collect(Collectors.toList());
 
         return CollectionModel.of(employees, linkTo(methodOn(EmployeeController.class).getAllEmployees()).withSelfRel());
+    }
+
+    @DeleteMapping("/employees/{id}")
+    ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+        this.employeeRepository.deleteById(id);
+
+        return ResponseEntity.noContent().build();
     }
 
 }
